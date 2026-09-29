@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - My Profile</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        /* Profile-Specific Clean Styling */
+        .profile-hero {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem 2rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .profile-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        .avatar-circle {
+            width: 72px;
+            height: 72px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+        }
+        .profile-hero-info h2 {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 0.2rem;
+        }
+        .profile-hero-info p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-header h3 {
+            font-size: 1.15rem;
+            margin-bottom: 0;
+        }
+        .permission-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card-alt);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.6rem;
+            border: 1px solid var(--border-color);
+        }
+        .permission-item label {
+            margin: 0;
+            font-weight: 500;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .active-caretaker-card {
+            background: var(--primary-light);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="profile-page">
+
+    <!-- Top Navigation Header -->
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-capsules"></i> CareDose</h1>
+        <div class="top-actions">
+            <a href="dashboard.html"><button class="btn btn-outline btn-sm">← Back to Dashboard</button></a>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode">
+    🌓
+</button>
+    </header>
+
+    <!-- 1. Profile Hero Summary Banner -->
+    <div class="profile-hero">
+        <div class="profile-hero-left">
+            <div class="avatar-circle" id="userAvatar">JD</div>
+            <div class="profile-hero-info">
+                <h2 id="heroUserName">John Doe</h2>
+                <p><i class="fa-solid fa-envelope"></i> <span id="heroUserEmail">patient@caredose.com</span></p>
+            </div>
+        </div>
+        <div>
+            <span class="status-badge" style="background: rgba(255,255,255,0.25); color: white; padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                <i class="fa-solid fa-shield-heart"></i> Verified Patient Account
+            </span>
+        </div>
+    </div>
+
+    <!-- 2. Two-Column Clean Grid -->
+    <div class="dashboard-grid">
+
+        <!-- Left Column: Personal, Clinical & Emergency Information -->
+        <div class="dashboard-main">
+
+            <div class="card">
+                <div class="section-header">
+                    <i class="fa-solid fa-user-pen" style="color: var(--primary); font-size: 1.2rem;"></i>
+                    <h3>Personal & Clinical Profile</h3>
+                </div>
+
+                <form id="healthProfileForm" onsubmit="event.preventDefault();">
+                    <div class="grid-2">
+                        <div>
+                            <label>Full Name</label>
+                            <input type="text" id="profileName" placeholder="Your full name" required>
+                        </div>
+                        <div>
+                            <label>Age</label>
+                            <input type="number" id="profileAge" placeholder="Age in years">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div>
+                            <label>Gender</label>
+                            <select id="profileGender">
+                                <option value="">Select Gender</option>
+                                <option value="Female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Blood Group</label>
+                            <input type="text" id="bloodGroup" placeholder="e.g. O+, A+, B-, AB+">
+                        </div>
+                    </div>
+
+                    <div class="section-header" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-phone-volume" style="color: var(--danger); font-size: 1.1rem;"></i>
+                        <h3>Emergency Details & Allergies</h3>
+                    </div>
+
+                    <div class="grid-2">
+                        <div>
+                            <label>Emergency Contact Phone</label>
+                            <input type="text" id="emergencyContact" placeholder="+91 98765 43210">
+                        </div>
+                        <div>
+                            <label>Documented Allergies</label>
+                            <input type="text" id="allergies" placeholder="e.g. Penicillin, Peanuts, Sulfa">
+                        </div>
+                    </div>
+
+                    <button type="button" id="saveProfileBtn" class="btn btn-success" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Profile Details
+                    </button>
+                </form>
+            </div>
+
+            <!-- Quick Snapshot Card -->
+            <div class="card">
+                <div class="section-header">
+                    <i class="fa-solid fa-qrcode" style="color: var(--secondary); font-size: 1.1rem;"></i>
+                    <h3>Emergency QR Quick Link</h3>
+                </div>
+                <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+                    Your profile information directly integrates with your Emergency QR Card. Choose what emergency responders see.
+                </p>
+                <div style="display: flex; gap: 0.5rem;">
+                    <a href="EmergencyQR.html"><button class="btn btn-sm">📱 Configure Emergency QR</button></a>
+                    <a href="health-records.html"><button class="btn btn-sm btn-outline">📋 View Health Records</button></a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Caretaker Linking & Granular Permissions -->
+        <div class="dashboard-sidebar">
+
+            <div class="card">
+                <div class="section-header">
+                    <i class="fa-solid fa-user-doctor" style="color: var(--primary); font-size: 1.2rem;"></i>
+                    <h3>Caretaker Management</h3>
+                </div>
+                <p style="font-size: 0.88rem; margin-bottom: 1rem;">
+                    Link a family member or caretaker to assist in monitoring your medications.
+                </p>
+
+                <!-- Active Caretaker Status Container -->
+                <div id="activeCaretakerSection" style="display: none;">
+                    <div class="active-caretaker-card">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <h4 id="activeCtName" style="color: var(--primary);">Sarah Care</h4>
+                                <p style="font-size:0.85rem;" id="activeCtEmail">caretaker@caredose.com</p>
+                            </div>
+                            <span class="status-badge status-taken">Active Link</span>
+                        </div>
+                        <button class="btn btn-sm btn-danger" style="margin-top: 0.75rem; width: 100%;" onclick="revokeCaretaker()">
+                            🚫 Revoke Caretaker Access
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Link Caretaker Form -->
+                <div id="linkCaretakerForm">
+                    <label>Caretaker's Registered Email</label>
+                    <input type="email" id="caretakerEmail" placeholder="registered.caretaker@email.com">
+
+                    <h4 style="font-size: 0.9rem; margin: 1rem 0 0.5rem;">Granular Permissions:</h4>
+                    
+                    <div class="permission-item">
+                        <label for="permSchedule"><i class="fa-solid fa-calendar-days"></i> Medication Schedule</label>
+                        <input type="checkbox" id="permSchedule" checked style="width: auto; margin: 0;">
+                    </div>
+
+                    <div class="permission-item">
+                        <label for="permAdherence"><i class="fa-solid fa-chart-pie"></i> Adherence & Taken Logs</label>
+                        <input type="checkbox" id="permAdherence" checked style="width: auto; margin: 0;">
+                    </div>
+
+                    <div class="permission-item">
+                        <label for="permVitals"><i class="fa-solid fa-heart-pulse"></i> Clinical Vitals & Records</label>
+                        <input type="checkbox" id="permVitals" style="width: auto; margin: 0;">
+                    </div>
+
+                    <div class="permission-item">
+                        <label for="permEmergency"><i class="fa-solid fa-truck-medical"></i> Emergency Contact Info</label>
+                        <input type="checkbox" id="permEmergency" checked style="width: auto; margin: 0;">
+                    </div>
+
+                    <button type="button" id="linkCaretakerBtn" class="btn btn-secondary" style="width: 100%; margin-top: 0.75rem;">
+                        <i class="fa-solid fa-link"></i> Save / Link Caretaker
+                    </button>
+                </div>
+
+                <p id="caretakerStatus" style="margin-top: 0.85rem; font-size: 0.85rem; font-weight: 500;"></p>
+            </div>
+
+            <!-- Account Security Card -->
+            <div class="card">
+                <div class="section-header">
+                    <i class="fa-solid fa-lock" style="color: var(--text-muted); font-size: 1.1rem;"></i>
+                    <h3>Account & Security</h3>
+                </div>
+                <p style="font-size: 0.85rem; margin-bottom: 0.75rem;">Manage your theme, notification settings, and password.</p>
+                <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                    <a href="settings.html"><button class="btn btn-sm btn-outline" style="width: 100%;">⚙️ Open App Settings</button></a>
+                    <button class="btn btn-sm btn-outline" style="width: 100%;" onclick="showToast('Password reset link sent to your registered email.', 'info')">🔑 Change Password</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+// Dynamic Profile Page Initializer
+document.addEventListener('DOMContentLoaded', () => {
+    const user = requireAuth(['patient']);
+    if (!user) return;
+
+    // 1. Populate Hero Banner & Initials
+    const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    document.getElementById('userAvatar').innerText = initials || 'JD';
+    document.getElementById('heroUserName').innerText = user.name;
+    document.getElementById('heroUserEmail').innerText = user.email;
+
+    // 2. Check if a caretaker is already linked
+    renderActiveCaretaker(user.id);
+});
+
+function renderActiveCaretaker(patientId) {
+    const links = CareDoseAPI.getCaretakerLinks().filter(l => l.patientId === patientId);
+    const activeSection = document.getElementById('activeCaretakerSection');
+
+    if (links.length > 0) {
+        const link = links[0];
+        activeSection.style.display = 'block';
+        document.getElementById('activeCtName').innerText = link.caretakerName;
+        document.getElementById('activeCtEmail').innerText = link.caretakerEmail;
+        document.getElementById('caretakerEmail').value = link.caretakerEmail;
+
+        // Sync permission checkboxes with saved state
+        if (link.permissions) {
+            document.getElementById('permSchedule').checked = !!link.permissions.viewSchedule;
+            document.getElementById('permAdherence').checked = !!link.permissions.viewAdherence;
+            document.getElementById('permVitals').checked = !!link.permissions.viewVitals;
+            document.getElementById('permEmergency').checked = !!link.permissions.viewEmergency;
+        }
+    } else {
+        activeSection.style.display = 'none';
+    }
+}
+
+function revokeCaretaker() {
+    const user = CareDoseAPI.getCurrentUser();
+    if (!user) return;
+
+    if (confirm('Are you sure you want to revoke this caretaker\'s access?')) {
+        let links = CareDoseAPI.getCaretakerLinks();
+        links = links.filter(l => l.patientId !== user.id);
+        CareDoseAPI.saveCaretakerLinks(links);
+
+        document.getElementById('caretakerEmail').value = '';
+        renderActiveCaretaker(user.id);
+        showToast('Caretaker access has been revoked.', 'info');
+    }
+}
+</script>
+</body>
+</html>

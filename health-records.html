@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Health Records</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+<div class="dashboard">
+
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-file-medical"></i> Health Records</h1>
+        <div class="top-actions">
+            <a href="dashboard.html"><button class="btn btn-outline btn-sm">← Dashboard</button></a><button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode">
+    🌓
+</button>
+
+        </div>
+    </header>
+
+    <div class="grid-2">
+        <!-- Vitals Tracking -->
+        <section class="card">
+            <h3>🩺 Log Health Vitals</h3>
+            <form id="vitalForm" onsubmit="event.preventDefault(); addVitalRecord();">
+                <label>Vital Type</label>
+                <select id="vitalType" required>
+                    <option value="Blood Pressure">Blood Pressure (mmHg)</option>
+                    <option value="Blood Sugar">Blood Sugar (mg/dL)</option>
+                    <option value="Pulse">Pulse (bpm)</option>
+                    <option value="Weight">Weight (kg)</option>
+                    <option value="Temperature">Temperature (°F)</option>
+                </select>
+
+                <label>Measured Value</label>
+                <input type="text" id="vitalValue" placeholder="e.g. 120/80, 95, 72" required>
+
+                <label>Date</label>
+                <input type="date" id="vitalDate" required>
+
+                <button type="submit" class="btn">Add Vital Entry</button>
+            </form>
+
+            <h4 style="margin-top: 1.5rem;">Recent Vitals</h4>
+            <div id="vitals-list" style="margin-top: 0.5rem;"></div>
+        </section>
+
+        <!-- Medical Conditions & Reports -->
+        <section class="card">
+            <h3>📋 Medical Conditions & Allergies</h3>
+            <form id="conditionForm" onsubmit="event.preventDefault(); addConditionRecord();">
+                <label>Condition / Allergy / Diagnosis</label>
+                <input type="text" id="conditionName" placeholder="e.g. Type 2 Diabetes, Hypertension, Penicillin Allergy" required>
+
+                <label>Diagnosed Date / Notes</label>
+                <input type="text" id="conditionNotes" placeholder="e.g. Diagnosed in 2024, Dr. Smith">
+
+                <button type="submit" class="btn btn-secondary">Add Condition</button>
+            </form>
+
+            <h4 style="margin-top: 1.5rem;">Documented Conditions</h4>
+            <div id="conditions-list" style="margin-top: 0.5rem;"></div>
+        </section>
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+function loadHealthRecords() {
+    const user = requireAuth(['patient']);
+    if (!user) return;
+
+    const records = CareDoseAPI.getHealthRecords(user.id);
+    
+    // Render Vitals
+    const vitalsDiv = document.getElementById('vitals-list');
+    vitalsDiv.innerHTML = records.vitals.length === 0 ? '<p>No vitals recorded.</p>' : '';
+    records.vitals.forEach((v, index) => {
+        vitalsDiv.innerHTML += `
+            <div class="med-item-card">
+                <div>
+                    <b>${v.type}:</b> ${v.value}
+                    <div class="med-item-meta">📅 ${v.date}</div>
+                </div>
+                <button class="btn btn-sm btn-outline" onclick="deleteVital(${index})">✕</button>
+            </div>
+        `;
+    });
+
+    // Render Conditions
+    const condDiv = document.getElementById('conditions-list');
+    condDiv.innerHTML = records.conditions.length === 0 ? '<p>No conditions recorded.</p>' : '';
+    records.conditions.forEach((c, index) => {
+        condDiv.innerHTML += `
+            <div class="med-item-card">
+                <div>
+                    <b>${c.name}</b>
+                    <div class="med-item-meta">${c.notes || 'No notes'}</div>
+                </div>
+                <button class="btn btn-sm btn-outline" onclick="deleteCondition(${index})">✕</button>
+            </div>
+        `;
+    });
+}
+
+function addVitalRecord() {
+    const user = CareDoseAPI.getCurrentUser();
+    const records = CareDoseAPI.getHealthRecords(user.id);
+    records.vitals.unshift({
+        type: document.getElementById('vitalType').value,
+        value: document.getElementById('vitalValue').value,
+        date: document.getElementById('vitalDate').value || new Date().toISOString().split('T')[0]
+    });
+    CareDoseAPI.saveHealthRecords(user.id, records);
+    showToast('Vital recorded', 'success');
+    loadHealthRecords();
+}
+
+function addConditionRecord() {
+    const user = CareDoseAPI.getCurrentUser();
+    const records = CareDoseAPI.getHealthRecords(user.id);
+    records.conditions.unshift({
+        name: document.getElementById('conditionName').value,
+        notes: document.getElementById('conditionNotes').value
+    });
+    CareDoseAPI.saveHealthRecords(user.id, records);
+    showToast('Condition added', 'success');
+    loadHealthRecords();
+}
+
+function deleteVital(idx) {
+    const user = CareDoseAPI.getCurrentUser();
+    const records = CareDoseAPI.getHealthRecords(user.id);
+    records.vitals.splice(idx, 1);
+    CareDoseAPI.saveHealthRecords(user.id, records);
+    loadHealthRecords();
+}
+
+function deleteCondition(idx) {
+    const user = CareDoseAPI.getCurrentUser();
+    const records = CareDoseAPI.getHealthRecords(user.id);
+    records.conditions.splice(idx, 1);
+    CareDoseAPI.saveHealthRecords(user.id, records);
+    loadHealthRecords();
+}
+
+document.addEventListener('DOMContentLoaded', loadHealthRecords);
+</script>
+</body>
+</html>

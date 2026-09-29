@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Medicine History</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="history-page">
+
+    <div class="history-box">
+        <header class="top-bar" style="margin-bottom: 1rem; border:none; padding:0;">
+            <div>
+                <h1>📋 Medicine Dose History</h1>
+                <p>Track your medicine intake records</p>
+            </div>
+            <a href="dashboard.html"><button class="btn btn-outline btn-sm">← Back to Dashboard</button></a>
+            <button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode">
+    🌓
+</button>
+        </header>
+
+        <!-- Search & Filter Controls -->
+        <div class="grid-2" style="margin-bottom: 1.25rem;">
+            <input type="text" id="historySearch" placeholder="🔍 Search medicine name..." oninput="filterHistory()">
+            <select id="statusFilter" onchange="filterHistory()">
+                <option value="ALL">All Statuses</option>
+                <option value="Taken">Taken Only</option>
+                <option value="Missed">Missed Only</option>
+                <option value="Skipped">Skipped Only</option>
+                <option value="Pending">Pending Only</option>
+            </select>
+        </div>
+
+        <div id="history-container">
+            <p>Loading history...</p>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+let allHistoryRecords = [];
+
+function loadHistory() {
+    const user = requireAuth(['patient', 'caretaker']);
+    if (!user) return;
+
+    const patientId = user.role === 'caretaker' ? CareDoseAPI.getCaretakerLinks()[0]?.patientId : user.id;
+    if (!patientId) {
+        document.getElementById("history-container").innerHTML = "<p>No linked records available.</p>";
+        return;
+    }
+
+    allHistoryRecords = CareDoseAPI.getDoseHistory(patientId);
+    filterHistory();
+}
+
+function filterHistory() {
+    const container = document.getElementById("history-container");
+    const query = (document.getElementById("historySearch").value || "").toLowerCase();
+    const filter = document.getElementById("statusFilter").value;
+
+    const filtered = allHistoryRecords.filter(item => {
+        const matchesQuery = item.medicineName.toLowerCase().includes(query);
+        const matchesStatus = filter === "ALL" || item.status === filter;
+        return matchesQuery && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="history-card" style="padding:1rem; border:1px solid var(--border-color); border-radius:8px;"><p>No records found matching filters.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+    filtered.forEach(h => {
+        const card = document.createElement("div");
+        card.className = `med-item-card ${h.status.toLowerCase()}`;
+        card.innerHTML = `
+            <div>
+                <h4>💊 ${h.medicineName} (${h.dosage || 'Dose'})</h4>
+                <p class="med-item-meta">📅 Date: ${h.date} | ⏰ Time: ${h.time}</p>
+            </div>
+            <div>
+                <span class="status-badge status-${h.status.toLowerCase()}">${h.status}</span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadHistory);
+</script>
+</body>
+</html>

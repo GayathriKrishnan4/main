@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Sign Up</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="auth-wrapper">
+    <div class="signup-page">
+
+        <!-- Left Visual Side -->
+        <div class="login-image">
+            <img src="images/image2.jpg" alt="CareDose Medical Team" onerror="this.src='https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&q=80'">
+        </div>
+
+        <!-- Right Form Side -->
+        <div class="signup-box">
+            <h1><i class="fa-solid fa-capsules"></i> CareDose</h1>
+            <p>Create your health management account</p>
+
+            <form id="signupForm">
+                <label>Full Name</label>
+                <input type="text" id="signupName" placeholder="e.g. John Doe" required>
+
+                <label>Email Address</label>
+                <input type="email" id="signupEmail" placeholder="name@example.com" required>
+
+                <label>Phone Number</label>
+                <div class="phone-input">
+                    <span class="country-code">+91</span>
+                    <input type="tel" id="signupPhone" placeholder="10-digit mobile" maxlength="10" required>
+                </div>
+
+                <label>Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="signupPassword" placeholder="At least 8 characters" minlength="8" required>
+                    <span class="password-toggle" onclick="togglePassword('signupPassword', this)">
+                        <i class="fa-solid fa-eye"></i>
+                    </span>
+                </div>
+
+                <label>Confirm Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
+                    <span class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                        <i class="fa-solid fa-eye"></i>
+                    </span>
+                </div>
+
+                <!-- User Type Selector with Admin Included -->
+                <label>I am registering as</label>
+                <select id="userType" required>
+                    <option value="">Select User Type</option>
+                    <option value="patient">Patient</option>
+                    <option value="caretaker">Caretaker</option>
+                    
+                   
+                </select>
+
+                <button type="submit" style="width: 100%; margin-top: 0.5rem;">
+                    Create Account
+                </button>
+
+                <div class="auth-links" style="justify-content: center; margin-top: 1rem;">
+                    <span>Already have an account? <a href="login.html">Sign In</a></span>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Settings</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+<div class="dashboard">
+
+    <header class="top-bar">
+        <h1>⚙️ App Settings</h1>
+        <div class="top-actions">
+            <a href="dashboard.html"><button class="btn btn-outline btn-sm">← Dashboard</button></a>
+        </div>
+    </header>
+
+    <div class="grid-2">
+        <section class="card">
+            <h3>🎨 Appearance</h3>
+            <p style="margin-bottom: 1rem;">Choose your preferred viewing mode</p>
+            <button class="btn btn-outline" onclick="toggleTheme()">
+                🌓 Toggle Dark / Light Theme
+            </button>
+        </section>
+
+        <!-- Custom Ringtone Chooser -->
+        <section class="card">
+            <h3>🔊 Alarm Sound & Ringtone</h3>
+            <p style="margin-bottom: 1rem;">Select the sound that plays continuously when a dose is due.</p>
+
+            <label>Alarm Tone</label>
+            <select id="alarmSoundSelect" onchange="saveRingtonePreference()">
+                <option value="chime">Gentle Chime (Continuous)</option>
+                <option value="digital">Digital Clock Alarm (Urgent)</option>
+                <option value="bell">Hospital Bell (Loud)</option>
+                <option value="melody">Calm Medication Melody</option>
+            </select>
+
+            <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                <button class="btn btn-sm btn-secondary" onclick="testAlarmSound()">▶️ Test Ringtone</button>
+                <button class="btn btn-sm btn-outline" onclick="stopContinuousAlarm()">⏹️ Stop Sound</button>
+            </div>
+        </section>
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const target = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', target);
+    localStorage.setItem('caredose_theme', target);
+    showToast(`Theme set to ${target}`, 'info');
+}
+
+function saveRingtonePreference() {
+    const selected = document.getElementById('alarmSoundSelect').value;
+    localStorage.setItem('caredose_alarm_sound', selected);
+    showToast(`Alarm sound set to ${selected}`, 'success');
+}
+
+function testAlarmSound() {
+    const selected = document.getElementById('alarmSoundSelect').value;
+    localStorage.setItem('caredose_alarm_sound', selected);
+    startContinuousAlarm();
+    showToast('Alarm sound playing continuously... Click "Stop Sound" to cancel.', 'info');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTone = localStorage.getItem('caredose_alarm_sound') || 'chime';
+    if (document.getElementById('alarmSoundSelect')) {
+        document.getElementById('alarmSoundSelect').value = savedTone;
+    }
+});
+</script>
+</body>
+</html>

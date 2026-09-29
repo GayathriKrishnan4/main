@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Medicine Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="medicine-page">
+
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-pills"></i> Manage Medicines</h1>
+        <div class="top-actions">
+            <a href="dashboard.html"><button class="btn btn-outline btn-sm">← Dashboard</button></a>
+        </div><button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode">
+    🌓
+</button>
+    </header>
+
+    <div class="grid-2">
+        <!-- Add Medicine Form -->
+        <div class="medicine-box">
+            <h3>➕ Add Medicine Schedule</h3>
+            <p style="margin-bottom: 1rem;">Setup timings, frequency, and dosage</p>
+
+            <form id="medicineForm" onsubmit="event.preventDefault();">
+                <label>Medicine Name</label>
+                <input type="text" id="medicineName" placeholder="e.g. Paracetamol, Metformin" required>
+
+                <label>Dosage</label>
+                <input type="text" id="dosage" placeholder="e.g. 500 mg, 1 Tablet" required>
+
+                <label>Medicine Type</label>
+                <select id="medicineType">
+                    <option value="Tablet">Tablet</option>
+                    <option value="Capsule">Capsule</option>
+                    <option value="Syrup">Syrup</option>
+                    <option value="Injection">Injection</option>
+                </select>
+
+                <label>Number of doses per day</label>
+                <select id="doseCount">
+                    <option value="1">1 Time Daily</option>
+                    <option value="2">2 Times Daily</option>
+                    <option value="3">3 Times Daily</option>
+                    <option value="4">4 Times Daily</option>
+                </select>
+
+                <label>Medicine Time(s)</label>
+                <div id="timeContainer">
+                    <input type="time" class="medicineTime" value="08:00">
+                </div>
+
+                <label>Food Instruction</label>
+                <select id="foodTiming">
+                    <option value="After Food">After Food</option>
+                    <option value="Before Food">Before Food</option>
+                    <option value="With Food">With Food</option>
+                    <option value="Anytime">Anytime</option>
+                </select>
+
+                <label>Start Date</label>
+                <input type="date" id="startDate">
+
+                <label>Duration</label>
+                <select id="duration" onchange="toggleCustomEndDate()">
+                    <option value="7">7 Days</option>
+                    <option value="14">14 Days</option>
+                    <option value="30">30 Days</option>
+                    <option value="custom">Custom End Date</option>
+                </select>
+
+                <div id="customEndDateContainer" style="display: none;">
+                    <label>End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+
+                <label>Frequency</label>
+                <select id="frequency">
+                    <option value="1">Every Day</option>
+                    <option value="2">Every 2 Days</option>
+                    <option value="3">Every 3 Days</option>
+                    <option value="7">Every Week</option>
+                </select>
+
+                <button type="button" id="addMedicineBtn" class="btn" style="width: 100%; margin-top: 0.5rem;">
+                    Add Medicine
+                </button>
+            </form>
+        </div>
+
+        <!-- Medicine List & Search -->
+        <div class="medicine-list">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Current Medicines</h3>
+                <a href="ocr-prescription.html"><button class="btn btn-sm btn-secondary">📷 Scan RX</button></a>
+            </div>
+
+            <input type="text" id="searchMedicineInput" placeholder="🔍 Search medicines..." oninput="filterMedicines()" style="margin-bottom: 1rem;">
+
+            <div id="medicine-container">
+                <p>Loading medicines...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Medicine Modal Dialog -->
+    <div id="editMedicineModal" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <h3>✏️ Edit Medicine Schedule</h3>
+            <p style="margin-bottom: 1rem;">Update your dosage and timings</p>
+
+            <form id="editMedForm" onsubmit="event.preventDefault(); saveEditedMedicine();">
+                <input type="hidden" id="editMedId">
+
+                <label>Medicine Name</label>
+                <input type="text" id="editMedName" required>
+
+                <label>Dosage</label>
+                <input type="text" id="editDosage" required>
+
+                <label>Medicine Type</label>
+                <select id="editMedType">
+                    <option value="Tablet">Tablet</option>
+                    <option value="Capsule">Capsule</option>
+                    <option value="Syrup">Syrup</option>
+                    <option value="Injection">Injection</option>
+                </select>
+
+                <label>Dose Times (Comma-separated HH:MM)</label>
+                <input type="text" id="editMedTimes" placeholder="e.g. 08:00, 20:00" required>
+
+                <label>Food Instruction</label>
+                <select id="editFoodTiming">
+                    <option value="After Food">After Food</option>
+                    <option value="Before Food">Before Food</option>
+                    <option value="With Food">With Food</option>
+                    <option value="Anytime">Anytime</option>
+                </select>
+
+                <label>Frequency (Days)</label>
+                <select id="editFrequency">
+                    <option value="1">Every Day</option>
+                    <option value="2">Every 2 Days</option>
+                    <option value="3">Every 3 Days</option>
+                    <option value="7">Every Week</option>
+                </select>
+
+                <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                    <button type="submit" class="btn btn-success" style="flex:1;">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+function toggleCustomEndDate() {
+    const duration = document.getElementById('duration').value;
+    const customContainer = document.getElementById('customEndDateContainer');
+    customContainer.style.display = duration === 'custom' ? 'block' : 'none';
+}
+
+function filterMedicines() {
+    const query = (document.getElementById('searchMedicineInput').value || '').toLowerCase();
+    const user = requireAuth();
+    if (!user) return;
+
+    const container = document.getElementById('medicine-container');
+    const medicines = CareDoseAPI.getMedicines(user.id);
+    const filtered = medicines.filter(m => m.name.toLowerCase().includes(query));
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<p>No medicines match your search.</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+    filtered.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'med-item-card';
+        div.innerHTML = `
+            <div>
+                <h4>💊 ${m.name} (${m.dosage})</h4>
+                <p class="med-item-meta">⏰ ${Array.isArray(m.time) ? m.time.join(', ') : m.time} | 🍽️ ${m.foodTiming || 'Anytime'}</p>
+                <small style="color:var(--text-muted);">Frequency: Every ${m.frequency || '1'} Day(s)</small>
+            </div>
+            <div style="display: flex; gap: 0.4rem;">
+                <button class="btn btn-sm btn-outline" onclick="openEditModal('${m.id}')">✏️ Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteMedicine('${m.id}')">Delete</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+</script>
+</body>
+</html>

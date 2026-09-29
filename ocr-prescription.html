@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Prescription OCR</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+<div class="dashboard">
+
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-camera"></i> Prescription OCR Scanner</h1>
+        <div class="top-actions">
+            <a href="dashboard.html"><button class="btn btn-outline btn-sm">← Dashboard</button></a>
+        </div>
+    </header>
+
+    <div class="info-box">
+        <b>Flow:</b> Upload prescription document → Process OCR → Verify and edit extracted details → Save directly to your medication schedule.
+    </div>
+
+    <!-- Step 1: Upload -->
+    <section class="card" id="uploadStep">
+        <h3>1. Upload Doctor's Prescription (Image/PDF)</h3>
+        <p style="margin-bottom: 1rem;">Supports PNG, JPG, JPEG, PDF</p>
+        
+        <input type="file" id="prescriptionFile" accept="image/*,.pdf" style="padding: 1.5rem; border: 2px dashed var(--border-color); text-align: center;">
+        
+        <button class="btn" style="margin-top: 1rem;" onclick="simulateOCRProcessing()">
+            <i class="fa-solid fa-microchip"></i> Run OCR Extraction
+        </button>
+    </section>
+
+    <!-- Step 2: Verification (Never auto-commits unverified OCR) -->
+    <section class="card" id="verifyStep" style="display: none;">
+        <h3>2. Verify & Confirm Extracted Medications</h3>
+        <p>Review the OCR extracted details and make any necessary corrections before saving.</p>
+
+        <form id="ocrVerifyForm" onsubmit="event.preventDefault(); commitExtractedMedicine();" style="margin-top: 1rem;">
+            <label>Detected Medicine Name</label>
+            <input type="text" id="ocrMedName" required>
+
+            <label>Detected Dosage</label>
+            <input type="text" id="ocrDosage" required>
+
+            <label>Detected Instructions</label>
+            <select id="ocrFoodTiming">
+                <option value="After Food">After Food</option>
+                <option value="Before Food">Before Food</option>
+                <option value="With Food">With Food</option>
+            </select>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                <button type="submit" class="btn btn-success">Confirm & Add to Schedule</button>
+                <button type="button" class="btn btn-secondary" onclick="resetOCR()">Cancel</button>
+            </div>
+        </form>
+    </section>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+function simulateOCRProcessing() {
+    const file = document.getElementById('prescriptionFile').files[0];
+    if (!file) {
+        showToast('Please select a file to scan', 'warning');
+        return;
+    }
+
+    showToast('Extracting text via OCR...', 'info');
+    setTimeout(() => {
+        document.getElementById('uploadStep').style.display = 'none';
+        document.getElementById('verifyStep').style.display = 'block';
+        
+        // Mock parsed result ready for Django OCR endpoint hook
+        document.getElementById('ocrMedName').value = 'Amoxicillin Trihydrate';
+        document.getElementById('ocrDosage').value = '500 mg';
+        document.getElementById('ocrFoodTiming').value = 'After Food';
+        showToast('OCR extracted successfully. Please verify details.', 'success');
+    }, 1000);
+}
+
+function commitExtractedMedicine() {
+    const user = requireAuth(['patient']);
+    if (!user) return;
+
+    const name = document.getElementById('ocrMedName').value;
+    const dosage = document.getElementById('ocrDosage').value;
+    const foodTiming = document.getElementById('ocrFoodTiming').value;
+
+    const medicines = CareDoseAPI.getMedicines(user.id);
+    medicines.push({
+        id: 'med_' + Date.now(),
+        name,
+        dosage,
+        type: 'Tablet',
+        foodTiming,
+        startDate: new Date().toISOString().split('T')[0],
+        time: ['08:00', '20:00'],
+        status: 'Pending'
+    });
+
+    CareDoseAPI.saveMedicines(user.id, medicines);
+    showToast('Verified medication added to schedule!', 'success');
+    setTimeout(() => { window.location.href = 'medicine.html'; }, 1000);
+}
+
+function resetOCR() {
+    document.getElementById('uploadStep').style.display = 'block';
+    document.getElementById('verifyStep').style.display = 'none';
+}
+</script>
+</body>
+</html>

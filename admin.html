@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - System Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+<div class="admin-page">
+
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-shield-halved"></i> CareDose Platform Administration</h1>
+        <div class="top-actions">
+            <button id="logoutBtn" class="btn btn-sm btn-danger">Logout</button>
+        </div>
+    </header>
+
+    <div class="danger-box">
+        🔒 <b>PRIVACY ENFORCEMENT:</b> Platform Administrators cannot view, edit, or tamper with patient medication schedules, medical records, or dose logs.
+    </div>
+
+    <!-- Platform Stats -->
+    <div class="grid-4">
+        <div class="card" style="text-align: center;">
+            <h2 id="adm-total-users" style="color: var(--primary);">0</h2>
+            <p>Total Accounts</p>
+        </div>
+        <div class="card" style="text-align: center;">
+            <h2 id="adm-active-users" style="color: var(--success);">0</h2>
+            <p>Active Users</p>
+        </div>
+        <div class="card" style="text-align: center;">
+            <h2 id="adm-master-drugs" style="color: var(--secondary);">0</h2>
+            <p>Verified Drugs in DB</p>
+        </div>
+        <div class="card" style="text-align: center;">
+            <h2 id="adm-total-links" style="color: var(--accent);">0</h2>
+            <p>Caretaker Links</p>
+        </div>
+    </div>
+
+    <!-- Tabbed Administration -->
+    <section class="card">
+        <h3>Master Drug Database Management</h3>
+        <p>Manage verified drug warnings, precautions, and food interactions.</p>
+        
+        <form id="addDrugForm" onsubmit="event.preventDefault(); addMasterDrug();" style="margin-top: 1rem;">
+            <div class="grid-3">
+                <input type="text" id="admDrugName" placeholder="Drug Name (e.g. Ibuprofen)" required>
+                <input type="text" id="admDosage" placeholder="Standard Dosage (e.g. 400mg)" required>
+                <select id="admDrugType">
+                    <option>Tablet</option>
+                    <option>Capsule</option>
+                    <option>Syrup</option>
+                    <option>Injection</option>
+                </select>
+            </div>
+            <input type="text" id="admWarnings" placeholder="Clinical Warning (e.g. Take with food to avoid gastric irritation)">
+            <button type="submit" class="btn btn-sm">➕ Add to Master Database</button>
+        </form>
+
+        <table class="styled-table" id="masterDrugTable">
+            <thead>
+                <tr>
+                    <th>Drug</th>
+                    <th>Standard Dosage</th>
+                    <th>Type</th>
+                    <th>Clinical Warning</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <!-- User Account Management -->
+    <section class="card">
+        <h3>Platform User Accounts</h3>
+        <table class="styled-table" id="userAccountsTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>System Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <!-- Audit Logs -->
+    <section class="card">
+        <h3>System Audit Logs</h3>
+        <div id="auditLogContainer" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;"></div>
+    </section>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const user = requireAuth(['admin']);
+    if (!user) return;
+    loadAdminDashboard();
+});
+
+function loadAdminDashboard() {
+    const users = CareDoseAPI.getUsers();
+    const drugDb = CareDoseAPI.getMasterDrugDatabase();
+    const links = CareDoseAPI.getCaretakerLinks();
+
+    document.getElementById('adm-total-users').innerText = users.length;
+    document.getElementById('adm-active-users').innerText = users.filter(u => u.status === 'active').length;
+    document.getElementById('adm-master-drugs').innerText = drugDb.length;
+    document.getElementById('adm-total-links').innerText = links.length;
+
+    // Render Master Drug DB
+    const drugTableBody = document.querySelector('#masterDrugTable tbody');
+    drugTableBody.innerHTML = '';
+    drugDb.forEach((d, idx) => {
+        drugTableBody.innerHTML += `
+            <tr>
+                <td><b>${d.name}</b></td>
+                <td>${d.dosage}</td>
+                <td>${d.type}</td>
+                <td>${d.warnings || 'None'}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="removeMasterDrug(${idx})">Delete</button></td>
+            </tr>
+        `;
+    });
+
+    // Render Users
+    const userTableBody = document.querySelector('#userAccountsTable tbody');
+    userTableBody.innerHTML = '';
+    users.forEach(u => {
+        userTableBody.innerHTML += `
+            <tr>
+                <td>${u.name}</td>
+                <td>${u.email}</td>
+                <td><span class="status-badge status-upcoming">${u.role}</span></td>
+                <td><span class="status-badge ${u.status === 'active' ? 'status-taken' : 'status-missed'}">${u.status}</span></td>
+                <td>
+                    ${u.role !== 'admin' ? `
+                        <button class="btn btn-sm btn-outline" onclick="toggleUserStatus('${u.id}')">
+                            ${u.status === 'active' ? 'Deactivate' : 'Activate'}
+                        </button>
+                    ` : 'System Core'}
+                </td>
+            </tr>
+        `;
+    });
+
+    // Render Audit Logs
+    const auditDiv = document.getElementById('auditLogContainer');
+    const logs = CareDoseAPI.getAuditLogs();
+    auditDiv.innerHTML = logs.map(l => `<div><b>[${l.timestamp}]</b> (${l.user}): ${l.action}</div>`).join('');
+}
+
+function addMasterDrug() {
+    const name = document.getElementById('admDrugName').value;
+    const dosage = document.getElementById('admDosage').value;
+    const type = document.getElementById('admDrugType').value;
+    const warnings = document.getElementById('admWarnings').value;
+
+    const db = CareDoseAPI.getMasterDrugDatabase();
+    db.push({ id: 'dr_' + Date.now(), name, dosage, type, warnings });
+    CareDoseAPI.saveMasterDrugDatabase(db);
+    CareDoseAPI.logAdminAction(`Added ${name} to Master Database`, CareDoseAPI.getCurrentUser().email);
+
+    showToast('Drug saved to master directory', 'success');
+    loadAdminDashboard();
+}
+
+function removeMasterDrug(idx) {
+    const db = CareDoseAPI.getMasterDrugDatabase();
+    const removed = db.splice(idx, 1);
+    CareDoseAPI.saveMasterDrugDatabase(db);
+    CareDoseAPI.logAdminAction(`Removed ${removed[0]?.name} from Master Database`, CareDoseAPI.getCurrentUser().email);
+    loadAdminDashboard();
+}
+
+function toggleUserStatus(userId) {
+    const users = CareDoseAPI.getUsers();
+    const target = users.find(u => u.id === userId);
+    if (target) {
+        target.status = target.status === 'active' ? 'deactivated' : 'active';
+        CareDoseAPI.saveUsers(users);
+        CareDoseAPI.logAdminAction(`Changed account status of ${target.email} to ${target.status}`, CareDoseAPI.getCurrentUser().email);
+        loadAdminDashboard();
+    }
+}
+</script>
+</body>
+</html>

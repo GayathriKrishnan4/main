@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Caretaker Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <!-- Chart.js for Health Trends & Adherence Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .patient-selector-box {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.18);
+            padding: 0.5rem 0.85rem;
+            border-radius: var(--radius-md);
+            margin-top: 0.75rem;
+            width: fit-content;
+        }
+        .patient-selector-box select {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: white;
+            color: var(--text-main);
+            margin: 0;
+            cursor: pointer;
+        }
+        .alert-card {
+            border-left: 4px solid var(--danger);
+            background: var(--danger-light);
+            color: #991b1b;
+            padding: 0.85rem 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        [data-theme="dark"] .alert-card {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+        }
+        .alert-card.warning {
+            border-left-color: var(--warning);
+            background: var(--warning-light);
+            color: #92400e;
+        }
+        [data-theme="dark"] .alert-card.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+        }
+        .permission-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.65rem;
+            border-radius: var(--radius-full);
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+        .filter-btn-group {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .filter-btn-group button {
+            padding: 0.25rem 0.6rem;
+            font-size: 0.78rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- 1. Header -->
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-user-doctor"></i> CareDose <small style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">| Caretaker Portal</small></h1>
+
+        <div class="top-actions">
+            <!-- Theme Toggle -->
+            <button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode">
+                🌓
+            </button>
+
+            <!-- Notifications -->
+            <button class="icon-badge-btn" onclick="window.location.href='notifications.html'" title="Notifications">
+                🔔 <span class="badge" id="notif-badge">0</span>
+            </button>
+
+            <!-- Settings -->
+            <button class="btn btn-outline btn-sm" onclick="window.location.href='settings.html'">
+                ⚙️ Settings
+            </button>
+
+            <!-- Logout -->
+            <button id="logoutBtn" class="btn btn-sm btn-danger">Logout</button>
+        </div>
+    </header>
+
+    <!-- 2. Welcome Banner with Multi-Patient Selector -->
+    <section class="welcome">
+        <h2 id="caretakerWelcome">Welcome, Caretaker 👋</h2>
+        <p>Monitor your patient's medication intake, adherence, and health vitals.</p>
+
+        <!-- Patient Selector -->
+        <div class="patient-selector-box" id="patientSelectorWrapper" style="display: none;">
+            <label for="patientSelectDropdown" style="color: white; font-weight: 500; margin: 0;">
+                <i class="fa-solid fa-hospital-user"></i> Monitoring Patient:
+            </label>
+            <select id="patientSelectDropdown" onchange="onSelectedPatientChange(this.value)"></select>
+        </div>
+    </section>
+
+    <!-- Caretaker Access / Permissions Bar -->
+    <div class="card" style="padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+            <span style="font-size: 0.85rem; font-weight: 600; margin-right: 0.5rem;"><i class="fa-solid fa-shield-halved" style="color: var(--primary);"></i> Access Permissions:</span>
+            <span id="grantedPermissionsList">Checking permissions...</span>
+        </div>
+        <div>
+            <span class="status-badge status-taken" id="monitoringStatusBadge">Active Monitoring</span>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+
+        <!-- =========================================================
+             LEFT COLUMN: Today's Medicines, Alerts & Adherence
+             ========================================================= -->
+        <div class="dashboard-main">
+
+            <!-- A. Medication Alerts Section -->
+            <section class="card" id="medicationAlertsCard">
+                <h3><i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i> Medication Alerts</h3>
+                <div id="caretakerAlertsContainer">
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">No urgent medication alerts.</p>
+                </div>
+            </section>
+
+            <!-- B. Today's Medicines (Live Monitoring) -->
+            <section class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                    <h3><i class="fa-solid fa-pills" style="color: var(--primary);"></i> Today's Schedule</h3>
+                    <small style="color: var(--text-muted);" id="todayDateLabel"></small>
+                </div>
+                
+                <div id="caretakerTodayMedicines">
+                    <p>Loading patient's scheduled doses...</p>
+                </div>
+            </section>
+
+            <!-- C. Medication Adherence Summary -->
+            <section class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                    <h3><i class="fa-solid fa-chart-pie" style="color: var(--secondary);"></i> Medication Adherence</h3>
+                    <a href="analytics.html" style="font-size: 0.82rem;">View Full Analytics →</a>
+                </div>
+
+                <div class="summary-items" style="margin-bottom: 1rem;">
+                    <div>
+                        <h2 id="ct-adherence-pct" style="color: var(--primary);">0%</h2>
+                        <p>Compliance Rate</p>
+                    </div>
+                    <div>
+                        <h2 id="ct-doses-taken" style="color: var(--success);">0</h2>
+                        <p>Doses Taken</p>
+                    </div>
+                    <div>
+                        <h2 id="ct-doses-missed" style="color: var(--danger);">0</h2>
+                        <p>Doses Missed</p>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div id="ct-adherence-progress" class="progress-fill" style="width: 0%;"></div>
+                </div>
+                <p id="ct-adherence-text" style="font-size: 0.82rem; text-align: right; margin-top: 0.3rem;">0% adherence</p>
+            </section>
+
+            <!-- D. Health Trends Graph (7 Days / 30 Days / 3 Months) -->
+            <section class="card" id="healthTrendsCard">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                    <h3><i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Health Trends (Pulse & Weight)</h3>
+                    <div class="filter-btn-group">
+                        <button class="btn btn-sm btn-outline active" id="btnFilter7d" onclick="filterHealthTrends(7)">7 Days</button>
+                        <button class="btn btn-sm btn-outline" id="btnFilter30d" onclick="filterHealthTrends(30)">30 Days</button>
+                        <button class="btn btn-sm btn-outline" id="btnFilter90d" onclick="filterHealthTrends(90)">3 Months</button>
+                    </div>
+                </div>
+
+                <div style="max-height: 250px; position: relative;">
+                    <canvas id="caretakerTrendsChart"></canvas>
+                </div>
+                <p id="noTrendsMsg" style="display:none; text-align:center; padding: 2rem; color:var(--text-muted);">No vitals logged for this period.</p>
+            </section>
+
+            <!-- E. Complete Active Medication List -->
+            <section class="card">
+                <h3><i class="fa-solid fa-clipboard-list" style="color: var(--primary);"></i> Active Prescriptions</h3>
+                <div id="caretakerAllMedicines">
+                    <p>Loading prescription schedule...</p>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- =========================================================
+             RIGHT COLUMN: Patient Overview, Emergency Card & Records
+             ========================================================= -->
+        <div class="dashboard-sidebar">
+
+            <!-- 1. Patient Overview Card (Read-Only) -->
+            <section class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                    <h3><i class="fa-solid fa-id-card" style="color: var(--primary);"></i> Patient Overview</h3>
+                    <span class="status-badge status-upcoming">Read-Only</span>
+                </div>
+
+                <div id="patientOverviewContent" style="font-size: 0.88rem; line-height: 1.8;">
+                    <p><b>Name:</b> <span id="poName">Loading...</span></p>
+                    <p><b>Age / Gender:</b> <span id="poAgeGender">-</span></p>
+                    <p><b>Blood Group:</b> <span id="poBlood">-</span></p>
+                    <p><b>Emergency Contact:</b> <span id="poEmergency">-</span></p>
+                    <p><b>Known Allergies:</b> <span id="poAllergies" style="color: var(--danger);">-</span></p>
+                    <p><b>Medical Conditions:</b> <span id="poConditions">-</span></p>
+                </div>
+
+                <button class="btn btn-sm btn-outline" style="width: 100%; margin-top: 1rem;" onclick="window.location.href='patient-profile.html'">
+                    👤 View Full Patient Profile
+                </button>
+            </section>
+
+            <!-- 2. Emergency Information Card -->
+            <section class="card" id="caretakerEmergencyCard">
+                <h3><i class="fa-solid fa-truck-medical" style="color: var(--danger);"></i> Emergency Information</h3>
+                <div style="font-size: 0.88rem; line-height: 1.7; margin: 0.5rem 0;" id="ctEmergencyDetails">
+                    <p><b>Emergency Phone:</b> <span id="emgContact">-</span></p>
+                    <p><b>Blood Group:</b> <span id="emgBlood">-</span></p>
+                    <p><b>Critical Allergies:</b> <span id="emgAllergies" style="color: var(--danger);">-</span></p>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                    <button class="btn btn-sm btn-secondary" style="flex: 1;" onclick="window.location.href='EmergencyQR.html'">
+                        <i class="fa-solid fa-qrcode"></i> View QR Card
+                    </button>
+                    <a id="callEmergencyBtn" href="tel:" class="btn btn-sm btn-danger" style="flex: 1; text-decoration: none; text-align: center;">
+                        <i class="fa-solid fa-phone"></i> Call Contact
+                    </a>
+                </div>
+            </section>
+
+            <!-- 3. Health Records Card (Permission-Gated) -->
+            <section class="card" id="caretakerHealthRecordsCard">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                    <h3><i class="fa-solid fa-file-medical" style="color: var(--secondary);"></i> Health Records</h3>
+                    <span class="status-badge status-upcoming" id="recordsPermBadge">Permitted</span>
+                </div>
+
+                <div id="ctHealthRecordsList" style="font-size: 0.85rem;">
+                    <p>Loading patient records...</p>
+                </div>
+            </section>
+
+            <!-- 4. Quick Permitted Actions -->
+            <section class="quick">
+                <h3>⚡ Permitted Actions</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button class="btn btn-sm btn-outline" onclick="window.location.href='patient-profile.html'">
+                        👤 View Patient Profile
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="window.location.href='analytics.html'">
+                        📊 View Full Medication Reports
+                    </button>
+                    <!-- Displayed only if patient specifically granted permission -->
+                    <button id="ctAddMedicineBtn" class="btn btn-sm btn-secondary" style="display: none;" onclick="window.location.href='medicine.html?caretaker=true'">
+                        ➕ Add Medicine for Patient
+                    </button>
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>

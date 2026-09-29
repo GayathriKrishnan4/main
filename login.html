@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CareDose - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<div class="login-page">
+
+    <div class="login-image">
+        <img src="Images/image2.jpg" alt="Doctor">
+    </div>
+
+    <div class="login-box">
+
+        <h1>CareDose</h1>
+        <p>Your Smart Medicine Reminder</p>
+
+        <form id="loginForm">
+
+    <input type="email" id="loginEmail" placeholder="Email" required>
+
+  <div class="password-wrapper">
+
+    <input
+        type="password"
+        id="loginPassword"
+        placeholder="Password"
+        required
+    >
+
+    <span
+        class="password-toggle"
+        onclick="togglePassword('loginPassword', this)"
+    >
+        <span class="eye-icon"></span>
+    </span>
+
+</div>
+
+    <button type="submit">Login</button>
+
+    <a href="#">Forgot Password?</a>
+
+    <p>
+        Don't have an account?
+        <a href="signup.html">Sign Up</a>
+    </p>
+
+</form>
+    </div>
+
+</div>
+<script src="js/script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Patient Profile Viewer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="profile-page">
+
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-id-card"></i> Patient Profile Viewer</h1>
+        <div class="top-actions">
+            <button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()">🌓</button>
+            <a href="caretaker.html"><button class="btn btn-outline btn-sm">← Back to Caretaker Dashboard</button></a>
+        </div>
+    </header>
+
+    <div class="card" style="max-width: 750px; margin: 1.5rem auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="avatar-circle" id="ppAvatar" style="width: 50px; height: 50px; font-size: 1.2rem; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">PT</div>
+                <div>
+                    <h3 id="ppPatientName" style="margin: 0;">Patient Name</h3>
+                    <p id="ppPatientEmail" style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">patient@email.com</p>
+                </div>
+            </div>
+            <span class="status-badge status-taken">Access Permitted</span>
+        </div>
+
+        <div id="patientProfileDetailedContent" style="font-size: 0.92rem; line-height: 2;">
+            <p>Loading patient records...</p>
+        </div>
+
+        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; justify-content: space-between;">
+            <a href="caretaker.html"><button class="btn btn-sm btn-outline">← Back to Dashboard</button></a>
+            <a href="EmergencyQR.html"><button class="btn btn-sm btn-secondary">📱 Emergency QR</button></a>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const user = requireAuth(['caretaker']);
+    if (!user) return;
+
+    const links = CareDoseAPI.getCaretakerLinks().filter(l => l.caretakerId === user.id);
+    const container = document.getElementById('patientProfileDetailedContent');
+
+    if (links.length === 0) {
+        container.innerHTML = '<p>No patient linked to your caretaker account.</p>';
+        return;
+    }
+
+    // Get selected patient from localStorage or default to first
+    const selectedPatientId = localStorage.getItem('caretaker_selected_patient_' + user.id) || links[0].patientId;
+    const currentLink = links.find(l => l.patientId === selectedPatientId) || links[0];
+
+    const users = CareDoseAPI.getUsers();
+    const patientUser = users.find(u => u.id === currentLink.patientId);
+    const profile = JSON.parse(localStorage.getItem(`profile_${currentLink.patientId}`)) || {};
+    const healthRecords = CareDoseAPI.getHealthRecords(currentLink.patientId);
+    const perms = currentLink.permissions || {};
+
+    const name = patientUser ? patientUser.name : 'Unknown Patient';
+    const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+    document.getElementById('ppAvatar').innerText = initials || 'PT';
+    document.getElementById('ppPatientName').innerText = name;
+    document.getElementById('ppPatientEmail').innerText = patientUser ? patientUser.email : '';
+
+    container.innerHTML = `
+        <div class="grid-2">
+            <div>
+                <p><b>Full Name:</b> <span>${name}</span></p>
+                <p><b>Age:</b> <span>${profile.age ? profile.age + ' years' : 'Not Specified'}</span></p>
+                <p><b>Gender:</b> <span>${profile.gender || 'Not Specified'}</span></p>
+                <p><b>Phone Number:</b> <span>${patientUser && patientUser.phone ? patientUser.phone : 'Not Added'}</span></p>
+            </div>
+            <div>
+                <p><b>Blood Group:</b> <span>${perms.viewEmergency ? (profile.bloodGroup || 'Not Added') : '<i style="color:var(--text-muted)">[Restricted by Patient]</i>'}</span></p>
+                <p><b>Emergency Contact:</b> <span>${perms.viewEmergency ? (profile.emergencyContact || 'Not Added') : '<i style="color:var(--text-muted)">[Restricted by Patient]</i>'}</span></p>
+                <p><b>Known Allergies:</b> <span>${perms.viewEmergency ? (profile.allergies || 'None Reported') : '<i style="color:var(--text-muted)">[Restricted by Patient]</i>'}</span></p>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+            <p><b>Diagnosed Conditions:</b> <span>${perms.viewVitals ? (healthRecords.conditions.map(c => c.name).join(', ') || 'None documented') : '<i style="color:var(--text-muted)">[Restricted by Patient]</i>'}</span></p>
+        </div>
+    `;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Emergency QR</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="qr-page">
+
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-qrcode"></i> Emergency Health Card</h1>
+        <div class="top-actions">
+            <button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode">🌓</button>
+            <a id="qrBackLink" href="dashboard.html"><button class="btn btn-outline btn-sm" id="qrBackBtnText">← Dashboard</button></a>
+        </div>
+    </header>
+
+    <div class="grid-2">
+        <!-- Left: QR Privacy Customizer (Patient View) or Caretaker Info Card -->
+        <section class="card" id="qrControlsCard">
+            <h3 id="qrControlsTitle">🔒 QR Privacy Controls</h3>
+            <p style="margin-bottom: 1rem;" id="qrControlsDesc">Select only the information you want first responders to see.</p>
+
+            <!-- Checkboxes for Patient Customization -->
+            <div id="patientPrivacyCheckboxes">
+                <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.6rem;">
+                    <input type="checkbox" id="includeName" checked style="width:auto; margin:0;" onchange="generateCustomQR()"> Include Full Name
+                </label>
+                <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.6rem;">
+                    <input type="checkbox" id="includeBlood" checked style="width:auto; margin:0;" onchange="generateCustomQR()"> Include Blood Group
+                </label>
+                <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.6rem;">
+                    <input type="checkbox" id="includeContact" checked style="width:auto; margin:0;" onchange="generateCustomQR()"> Include Emergency Contact
+                </label>
+                <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.6rem;">
+                    <input type="checkbox" id="includeAllergies" checked style="width:auto; margin:0;" onchange="generateCustomQR()"> Include Known Allergies
+                </label>
+                <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom: 1rem;">
+                    <input type="checkbox" id="includeMeds" checked style="width:auto; margin:0;" onchange="generateCustomQR()"> Include Current Medicines
+                </label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top: 1rem;">
+                <button class="btn btn-sm" id="btnRegenerateQR" onclick="generateCustomQR()">🔄 Regenerate QR</button>
+                <button class="btn btn-sm btn-secondary" onclick="downloadQRCode()">💾 Download QR</button>
+                <button class="btn btn-sm btn-danger" id="btnRevokeQR" onclick="revokeQR()">🚫 Revoke QR</button>
+            </div>
+
+            <p style="margin-top: 1.25rem; font-size:0.85rem;" id="qrStatusBadge">
+                Status: <span class="status-badge status-taken">Active & Valid</span>
+            </p>
+        </section>
+
+        <!-- Right: Emergency Responder View & QR Display Card -->
+        <div class="qr-card">
+            <h2 style="text-align: center; font-size: 1.3rem;">🚨 Emergency Responder Card</h2>
+            <p style="text-align: center; font-size: 0.85rem; margin-bottom: 1rem;" id="qrSubtitle">Scan in case of medical emergency</p>
+
+            <!-- Centered QR Box -->
+            <div class="qr-image" style="display:flex; justify-content:center; align-items:center; padding:1.25rem; background:white; border-radius:12px; border:1px solid var(--border-color); width:fit-content; margin:0 auto 1.5rem;">
+                <div id="qrcode" style="min-width: 180px; min-height: 180px; display: flex; align-items: center; justify-content: center;"></div>
+            </div>
+
+            <!-- Patient Details -->
+            <div class="patient-details" style="font-size: 0.9rem; line-height: 1.7;">
+                <p><b>Name:</b> <span id="qrName">-</span></p>
+                <p><b>Blood Group:</b> <span id="qrBlood">-</span></p>
+                <p><b>Emergency Contact:</b> <span id="qrContact">-</span></p>
+                <p><b>Allergies:</b> <span id="qrAllergy" style="color:var(--danger);">-</span></p>
+                <p><b>Critical Medicines:</b></p>
+                <ul id="qrMedicineList" style="margin-left: 1.5rem;"></ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- High-Reliability QRious Canvas Generator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="js/script.js"></script>
+<script>
+let currentQRDataURL = '';
+
+function generateCustomQR() {
+    // 1. Allow both Patients and Caretakers
+    const user = requireAuth(['patient', 'caretaker']);
+    if (!user) return;
+
+    let targetPatientId = user.id;
+    let patientName = user.name;
+    let isCaretaker = user.role === 'caretaker';
+
+    // 2. Adjust navigation & views for Caretaker
+    if (isCaretaker) {
+        document.getElementById('qrBackLink').href = 'caretaker.html';
+        document.getElementById('qrBackBtnText').innerText = '← Caretaker Dashboard';
+
+        // Retrieve the currently active selected patient
+        const links = CareDoseAPI.getCaretakerLinks().filter(l => l.caretakerId === user.id);
+        if (links.length === 0) {
+            showToast('No linked patients found.', 'error');
+            return;
+        }
+
+        const selectedId = localStorage.getItem('caretaker_selected_patient_' + user.id) || links[0].patientId;
+        const currentLink = links.find(l => l.patientId === selectedId) || links[0];
+        const perms = currentLink.permissions || {};
+
+        if (!perms.viewEmergency) {
+            document.querySelector('.grid-2').innerHTML = `
+                <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                    <h3>Emergency Access Restricted</h3>
+                    <p>The patient has not granted permission to view emergency QR cards.</p>
+                    <a href="caretaker.html"><button class="btn btn-outline" style="margin-top:1rem;">← Return to Dashboard</button></a>
+                </div>
+            `;
+            return;
+        }
+
+        targetPatientId = currentLink.patientId;
+        const allUsers = CareDoseAPI.getUsers();
+        const pUser = allUsers.find(u => u.id === targetPatientId);
+        patientName = pUser ? pUser.name : 'Patient';
+
+        // Adapt left card for Caretaker Monitor mode
+        document.getElementById('qrControlsTitle').innerHTML = '🧑‍⚕️ Patient QR Card Monitor';
+        document.getElementById('qrControlsDesc').innerText = `Viewing emergency QR card for patient: ${patientName}.`;
+        document.getElementById('patientPrivacyCheckboxes').style.display = 'none';
+        document.getElementById('btnRegenerateQR').style.display = 'none';
+        document.getElementById('btnRevokeQR').style.display = 'none';
+    }
+
+    const profile = JSON.parse(localStorage.getItem(`profile_${targetPatientId}`)) || {};
+    const meds = CareDoseAPI.getMedicines(targetPatientId);
+
+    // 3. Gather privacy-filtered data
+    let name = patientName;
+    let bloodGroup = profile.bloodGroup || 'Not Specified';
+    let emergencyContact = profile.emergencyContact || profile.phone || 'Not Specified';
+    let allergies = profile.allergies || 'None';
+    let medNames = meds.map(m => `${m.name} (${m.dosage})`).slice(0, 4);
+
+    if (!isCaretaker) {
+        name = document.getElementById('includeName').checked ? user.name : 'Redacted';
+        bloodGroup = document.getElementById('includeBlood').checked ? (profile.bloodGroup || 'Not Specified') : 'Redacted';
+        emergencyContact = document.getElementById('includeContact').checked ? (profile.emergencyContact || user.phone || 'Not Specified') : 'Redacted';
+        allergies = document.getElementById('includeAllergies').checked ? (profile.allergies || 'None') : 'Redacted';
+        medNames = document.getElementById('includeMeds').checked ? meds.map(m => `${m.name} (${m.dosage})`).slice(0, 4) : ['Redacted by Patient'];
+    }
+
+    // 4. Render On-Screen Details
+    document.getElementById('qrName').innerText = name;
+    document.getElementById('qrBlood').innerText = bloodGroup;
+    document.getElementById('qrContact').innerText = emergencyContact;
+    document.getElementById('qrAllergy').innerText = allergies;
+
+    const medList = document.getElementById('qrMedicineList');
+    medList.innerHTML = medNames.length > 0 ? medNames.map(m => `<li>${m}</li>`).join('') : '<li>No active medicines</li>';
+
+    // 5. Generate QR String & Code
+    const qrString = `EMERGENCY MEDICAL CARD\nName: ${name}\nBlood: ${bloodGroup}\nContact: ${emergencyContact}\nAllergies: ${allergies}\nMeds: ${medNames.join(', ')}`;
+
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
+
+    try {
+        if (typeof QRious !== 'undefined') {
+            const canvas = document.createElement('canvas');
+            new QRious({
+                element: canvas,
+                value: qrString,
+                size: 180,
+                level: 'L'
+            });
+            qrContainer.appendChild(canvas);
+            currentQRDataURL = canvas.toDataURL('image/png');
+        } else {
+            throw new Error('QRious library not loaded');
+        }
+    } catch (e) {
+        const fallbackURL = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrString)}`;
+        qrContainer.innerHTML = `<img src="${fallbackURL}" alt="Emergency QR Code" width="180" height="180" style="display:block;">`;
+        currentQRDataURL = fallbackURL;
+    }
+
+    document.getElementById('qrStatusBadge').innerHTML = 'Status: <span class="status-badge status-taken">Active & Valid</span>';
+}
+
+function revokeQR() {
+    document.getElementById('qrcode').innerHTML = '<div style="color:var(--danger); font-weight:600; padding:2rem; text-align:center;">🚫 QR Code Revoked</div>';
+    document.getElementById('qrStatusBadge').innerHTML = 'Status: <span class="status-badge status-missed">Revoked</span>';
+    showToast('Emergency QR has been revoked', 'error');
+}
+
+function downloadQRCode() {
+    if (!currentQRDataURL) {
+        showToast('Generate a QR code first', 'warning');
+        return;
+    }
+    const link = document.createElement('a');
+    link.href = currentQRDataURL;
+    link.download = 'CareDose-Emergency-QR.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Emergency QR downloaded!', 'success');
+}
+
+document.addEventListener('DOMContentLoaded', generateCustomQR);
+</script>
+</body>
+</html>

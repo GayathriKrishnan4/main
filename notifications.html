@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose - Notification Center</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+<div class="dashboard">
+
+    <header class="top-bar">
+        <h1>🔔 Notification Center</h1>
+        <div class="top-actions">
+            <a href="dashboard.html"><button class="btn btn-outline btn-sm">← Dashboard</button></a>
+        </div>
+    </header>
+
+    <div style="display:flex; justify-content:space-between; margin-bottom: 1rem; align-items:center;">
+        <p>Stay up to date with your reminders, missed doses, and caretaker updates.</p>
+        <button class="btn btn-sm btn-outline" onclick="markAllNotificationsRead()">Mark all as read</button>
+    </div>
+
+    <section class="card" id="notifications-container">
+        <p>Loading notifications...</p>
+    </section>
+
+</div>
+
+<script src="js/script.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const user = requireAuth();
+    if (!user) return;
+
+    const notifs = CareDoseAPI.getNotifications(user.id);
+    const container = document.getElementById('notifications-container');
+
+    if (notifs.length === 0) {
+        container.innerHTML = '<p>No notifications at this time.</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+    notifs.forEach(n => {
+        container.innerHTML += `
+            <div class="med-item-card" style="border-left-color: ${n.read ? 'var(--border-color)' : 'var(--primary)'};">
+                <div>
+                    <h4>${n.title}</h4>
+                    <p>${n.message}</p>
+                    <div class="med-item-meta">📅 ${n.date}</div>
+                </div>
+                <div>
+                    ${!n.read ? '<span class="status-badge status-upcoming">New</span>' : '<span class="status-badge status-skipped">Read</span>'}
+                </div>
+            </div>
+        `;
+    });
+});
+
+function markAllNotificationsRead() {
+    const user = CareDoseAPI.getCurrentUser();
+    if (!user) return;
+    let notifs = CareDoseAPI.getNotifications(user.id);
+    notifs.forEach(n => n.read = true);
+    CareDoseAPI.saveNotifications(user.id, notifs);
+    showToast('All notifications marked as read', 'success');
+    setTimeout(() => location.reload(), 500);
+}
+</script>
+</body>
+</html>

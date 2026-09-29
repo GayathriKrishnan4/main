@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareDose Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Top Header -->
+    <header class="top-bar">
+        <h1><i class="fa-solid fa-capsules"></i> CareDose</h1>
+
+        <div class="top-actions">
+            <button class="icon-badge-btn" onclick="window.location.href='notifications.html'" title="Notifications">
+                🔔 <span class="badge" id="notif-badge">1</span>
+            </button>
+<button class="btn btn-outline btn-sm" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode">
+    🌓
+</button>
+            <button class="btn btn-outline btn-sm" onclick="window.location.href='profile.html'">
+                👤 Profile
+            </button>
+
+            <button class="btn btn-outline btn-sm" onclick="window.location.href='settings.html'">
+                ⚙️
+            </button>
+
+            <button id="logoutBtn" class="btn btn-sm btn-danger">Logout</button>
+        </div>
+    </header>
+
+    <!-- Navigation Hub -->
+    <nav class="app-nav-bar">
+        <a href="dashboard.html" class="app-nav-link active"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="medicine.html" class="app-nav-link"><i class="fa-solid fa-pills"></i> Medicines</a>
+        <a href="history.html" class="app-nav-link"><i class="fa-solid fa-calendar-check"></i> History</a>
+        <a href="health-records.html" class="app-nav-link"><i class="fa-solid fa-file-medical"></i> Health Records</a>
+        <a href="analytics.html" class="app-nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+        <a href="ocr-prescription.html" class="app-nav-link"><i class="fa-solid fa-camera"></i> Scan RX</a>
+        <a href="EmergencyQR.html" class="app-nav-link"><i class="fa-solid fa-qrcode"></i> Emergency QR</a>
+    </nav>
+
+    <!-- Welcome Banner -->
+    <section class="welcome">
+        <h2 id="welcomeMessage">Good Day 👋</h2>
+        <p>Stay healthy and never miss your medication.</p>
+    </section>
+
+    <!-- Structured 2-Column Dashboard Grid -->
+    <div class="dashboard-grid">
+
+        <!-- Left Column: Summary, Today's Medicines & Actions -->
+        <div class="dashboard-main">
+            
+            <!-- Summary Bar -->
+            <section class="summary-card">
+                <h3>📊 Today's Status</h3>
+                <div class="summary-items">
+                    <div>
+                        <h2 id="total-medicines">0</h2>
+                        <p>Total Scheduled</p>
+                    </div>
+                    <div>
+                        <h2 id="taken-medicines" style="color: var(--success);">0</h2>
+                        <p>Taken</p>
+                    </div>
+                    <div>
+                        <h2 id="pending-medicines" style="color: var(--warning);">0</h2>
+                        <p>Pending</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Medicines Timeline -->
+            <section class="card">
+                <h3>💊 Today's Medicines</h3>
+                <div id="today-medicines">
+                    <p>No medicines scheduled for today.</p>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="quick">
+                <h3>⚡ Quick Actions</h3>
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                    <a href="medicine.html"><button class="btn btn-sm">➕ Add Medicine</button></a>
+                    <a href="history.html"><button class="btn btn-sm btn-secondary">📋 History</button></a>
+                    <a href="ocr-prescription.html"><button class="btn btn-sm btn-secondary">📷 Scan RX</button></a>
+                    <a href="EmergencyQR.html"><button class="btn btn-sm btn-secondary">📱 QR Code</button></a>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Right Column: Progress, Health Overview & Caretaker -->
+        <div class="dashboard-sidebar">
+            
+            <!-- Adherence Progress -->
+            <section class="progress-card">
+                <h3>📈 Daily Progress</h3>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p id="progress-text" style="font-size: 0.85rem; font-weight: 500; text-align: right;">0% Completed</p>
+            </section>
+
+            <!-- Health Overview -->
+            <section class="health-card">
+                <h3>❤️ Health Vitals</h3>
+                <div class="health-items">
+                    <div>
+                        <h2>78</h2>
+                        <p>Pulse (bpm)</p>
+                    </div>
+                    <div>
+                        <h2>70</h2>
+                        <p>Weight (kg)</p>
+                    </div>
+                </div>
+                <div style="margin-top: 0.8rem; text-align: right;">
+                    <a href="health-records.html" style="font-size: 0.82rem;">View Full Records →</a>
+                </div>
+            </section>
+
+            <!-- Profile Summary Card -->
+            <section class="health-info-card">
+                <h3>🩺 Health Profile</h3>
+                <div style="font-size: 0.88rem; line-height: 1.7; margin-bottom: 0.8rem;">
+                    <p><b>Name:</b> <span id="dashboard-profile-name">Not Added</span></p>
+                    <p><b>Blood:</b> <span id="dashboard-blood-group">Not Added</span></p>
+                    <p><b>Emergency:</b> <span id="dashboard-emergency-contact">Not Added</span></p>
+                    <p><b>Allergies:</b> <span id="dashboard-allergies">None</span></p>
+                </div>
+                <button class="btn btn-sm btn-outline" style="width: 100%;" onclick="window.location.href='profile.html'">
+                    Edit Profile
+                </button>
+            </section>
+
+            <!-- Linked Caretaker Card -->
+            <section class="health-info-card">
+                <h3>🧑‍⚕️ Linked Caretaker</h3>
+                <div id="myCaretaker" style="font-size: 0.88rem;">
+                    <p>No caretaker linked yet.</p>
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
